@@ -3,12 +3,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.linalg as sc
 
-#graphs looks good at Kp = 2, Ki = 3, Ka = 1, Km = 0
-Kp = 5  #correction term coefficient  
-Ki = 2    #Bias update coefficient
-Ka = 0.9      #accelerometer term coefficient in correction
-Km = 0.1      #magnetometer term coefficient in correction
+#Kp = 5, Ki =2, ka =0.8 km = 0.2 works good 
+#Best case till now Kp = 15, Ki =2, ka =0.8 km = 0.2
+Kp = 15  #correction term coefficient 
+Ki = 5    #Bias update coefficient
+Ka = 0.8      #accelerometer term coefficient in correction
+Km = 0.2      #magnetometer term coefficient in correction
 pi = 3.14159265359
+datarate = 20 #rate of data collection in Hz
 def Vectocrossm(v):
     vx = np.array([[0, -v[2], v[1]],[v[2], 0, -v[0]],[-v[1], v[0], 0]])
     return vx
@@ -26,7 +28,7 @@ def correction(vg,vgcap,vm,vmcap):
     return Ka*np.cross(vg,vgcap) + Km*np.cross(vm,vmcap)    
     
 def main():
-    df = pd.read_csv('/home/karan/Joint State Estimation/Data221020_1504.csv') 
+    df = pd.read_csv('/home/dell/Project/Joint-State-Estimation-main/Data221020_1504.csv') 
     data = np.array(df)
     Rcap = np.matrix([[1, 0, 0],[0, 1, 0],[0, 0, 1]])
     bcap = np.array([0.1, 0.1, 0.1])
@@ -87,51 +89,70 @@ def main():
         bcap = bcap + dotbcap*0.05
         
     
-    Instants = np.array(Instants)
-    B1cap = np.array(B1cap)
-    B2cap = np.array(B2cap)
-    B3cap = np.array(B3cap)
+    Instants = np.array(Instants)/datarate
+    B1cap = np.array(B1cap)*180/pi
+    B2cap = np.array(B2cap)*180/pi
+    B3cap = np.array(B3cap)*180/pi
     
-    Theta = np.array(Theta)
-    Psi = np.array(Psi)
-    Phi = np.array(Phi)
+    Theta = np.array(Theta)*180/pi
+    Psi = np.array(Psi)*180/pi
+    Phi = np.array(Phi)*180/pi
     
-    print('theta')
+    print('alpha')
     plt.figure(1)
     plt.plot(Instants,Theta)
     fig1 = plt.figure(1)
-    fig1.suptitle('theta')
+    fig1.suptitle(r'$\theta$ vs time')
+    plt.ylabel(r'$\theta (^{o})$')
+    plt.xlabel('time (s)')
+    plt.savefig('theta.png')
     
     print('psi')
     plt.figure(2)
     plt.plot(Instants,Psi)
     fig2 = plt.figure(2)
-    fig2.suptitle('psi')
+    fig2.suptitle(r'$\psi$ vs time')
+    plt.ylabel(r'$\psi (^{o})$')
+    plt.xlabel('time (s)')
+    plt.savefig('psi.png')
     
     
     print('phi')
     plt.figure(3)
     plt.plot(Instants,Phi)
     fig3 = plt.figure(3)
-    fig3.suptitle('phi')
+    fig3.suptitle(r'$\phi$ vs time')
+    plt.ylabel(r'$\phi (^{o})$')
+    plt.xlabel('time (s)')
+    plt.savefig('phi.png')
     
     print('b1cap')
     plt.figure(4)
     plt.plot(Instants,B1cap)
     fig4 = plt.figure(4)
-    fig4.suptitle('b1cap')
+    fig4.suptitle('$\hat{b}_1$ vs time')
+    plt.xlabel('time (s)')
+    plt.ylabel(r'$\hat{b}_1({^o/s})$')
+    plt.savefig('b1.png')
     
     print('b2cap')
     plt.figure(5)
     plt.plot(Instants,B2cap)
     fig5 = plt.figure(5)
-    fig5.suptitle('b2cap')
+    fig5.suptitle('$\hat{b}_2$ vs time')
+    plt.xlabel('time (s)')
+    plt.ylabel(r'$\hat{b}_2({^o/s})$')
+    plt.savefig('b2.png')
+    
     
     print('b3cap')
     plt.figure(6)
     plt.plot(Instants,B3cap)
     fig6 = plt.figure(6)
-    fig6.suptitle('b3cap')
+    fig6.suptitle('$\hat{b}_3$ vs time')
+    plt.xlabel('time (s)')
+    plt.ylabel(r'$\hat{b}_3({^o/s})$')
+    plt.savefig('b3.png')
     
     #plt.plot(Instants,Bcap)
     
