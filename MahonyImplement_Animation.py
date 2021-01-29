@@ -104,11 +104,11 @@ prevtime = 0
 dotR = 0
 def calculateAng():
         global i, Rcap, prevtime, dotR
-        ser = serial.Serial('COM3',115200)
+        ser = serial.Serial('/dev/ttyACM0',115200)
         s = ser.readline()
         s = str(s)
         s = s.split(',')
-            
+        print('i : ',i)
         t = time.time() - starttime
         ax = float(s[1])
         ay = float(s[2])
@@ -120,6 +120,8 @@ def calculateAng():
         my = float(s[8])
         mz = float(s[9][:(len(s[9])-5)])  #to remove trailing elements
         reading = np.array([t, ax, ay, az, gx, gy, gz, mx, my, mz])
+        print('currtime',t)
+        
         
         if i == 0:
             nowtime = reading[0]
@@ -136,24 +138,12 @@ def calculateAng():
             #vm = vmr                             #for i = 0 low pass filter reading will be the actual reading
             vgcap = np.transpose(Rcap)*vg0
             vgcap = np.array([vgcap[0,0],vgcap[1,0],vgcap[2,0]])
-            
-            
-            
-            
-            #Euler angles of transpse of matrix
+
+            #Euler angles 
             eulang = rotationMatrixToEulerAngles(Rcap)
             
             
-            #print(i)
-            #vgcap = np.transpose(vgcap)
-            #print(vg)
-            #print('Karan')
-            #print(vgcap,'vgcap')
-                #print(vm)
-        #temp = np.cross(vg,vgcap)
-                #print(temp)
-        #print(Rcap)
-            #print(bcap)
+            
             vmcap = np.transpose(Rcap)*vm0
             vmcap = np.array([vmcap[0,0],vmcap[1,0],vmcap[2,0]])
             #print(vmcap)
@@ -170,6 +160,7 @@ def calculateAng():
         if i != 0:   
             nowtime = reading[0]
             delt = nowtime - prevtime
+            print('delt : ', delt)
             Rcap = Rcap*sc.expm(dotR*delt)
 #            if nowtime > 10 and nowtime < 20:
 #                print(Rcap)
@@ -201,21 +192,16 @@ def calculateAng():
             #Wmes[i,:] = wmes 
             dotR = Rcapdot(Rcap, Omegam, bcap, wmes)
             
-            #Rcap = Rcap*sc.expm(np.transpose(Rcap)*dotR*(data[i+1,0] - data[i,0]))
-            
-            
-        #bcap = bcap + dotbcap*(data[i+1,0] - data[i,0])
-            
             prevtime = nowtime
             #print(Thetat)
            
             
         i = i + 1
-        return eulang[1]
+        return eulang[2]*180/pi
         
 
 # This function is called periodically from FuncAnimation
-def animate(i, ys):
+def animate(j, ys):
 
     # Read temperature (Celsius) from TMP102
     t1 = time.time()
