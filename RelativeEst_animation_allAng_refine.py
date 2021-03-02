@@ -117,11 +117,11 @@ ys3 = [0] * x_len
 ax3.set_ylim(y_range)
 ax3.set_title(r'$\Psi$ (Yaw)')
 
-fig4 = plt.figure(4)
-ax4 = fig4.add_subplot(1, 1, 1)
-xs = list(range(0, 200))
-ys4 = [0] * x_len
-ax4.set_ylim(y_range)
+#fig4 = plt.figure(4)
+#ax4 = fig4.add_subplot(1, 1, 1)
+#xs = list(range(0, 200))
+#ys4 = [0] * x_len
+#ax4.set_ylim(y_range)
 # Initialize communication with TMP102
 
 
@@ -129,16 +129,17 @@ ax4.set_ylim(y_range)
 line1, = ax1.plot(xs, ys1)
 line2, = ax2.plot(xs, ys2)
 line3, = ax3.plot(xs, ys3)
-line4, = ax4.plot(xs, ys4)
+#line4, = ax4.plot(xs, ys4)
 # Add labels
 
 i = 0
-prevtime = 0
+prevtime1 = 0
+prevtime2 = 0
 dotR = 0
 wmesp = 0
 starttime =time.time()
 def calculateAng():
-        global i, Rcap1, Rcap2, prevtime, dotR1, wmesp, dotR2, Rrel
+        global i, Rcap1, Rcap2, prevtime1, prevtime2, dotR1, wmesp, dotR2, Rrel
         ValidData = 0     #to keep track that the reading taken from sensor is valid (can set any other value than 10)
         
         #reading IMU1 Data
@@ -148,18 +149,19 @@ def calculateAng():
             s1 = str(s1)
             s1 = s1.split(',')
             ValidData = len(s1)
-            
-        #reading IMU2 Data    
+        t1 = time.time() - starttime         
+        #reading IMU2 Data  
+        ValidData = 0   #Necesarry if not done next while loop will be skipped 
         while ValidData!=10:
-            ser2 = serial.Serial('/dev/ttyACM0',115200)
+            ser2 = serial.Serial('/dev/ttyACM2',115200)
             s2 = ser2.readline()
             s2 = str(s2)
             s2 = s2.split(',')
             ValidData = len(s2)
+        t2 = time.time() - starttime 
         
+        #print(s2)
         
-        #print('i : ',i)
-        t = time.time() - starttime     
         ax = float(s1[1])
         ay = float(s1[2])
         az = float(s1[3])
@@ -169,9 +171,9 @@ def calculateAng():
         mx = float(s1[7])
         my = float(s1[8])
         mz = float(s1[9][:(len(s1[9])-5)])  #to remove trailing elements
-        reading1 = np.array([t, ax, ay, az, gx, gy, gz, mx, my, mz])
+        reading1 = np.array([t1, ax, ay, az, gx, gy, gz, mx, my, mz])
         
-        t = time.time() - starttime     
+            
         ax = float(s2[1])
         ay = float(s2[2])
         az = float(s2[3])
@@ -181,7 +183,7 @@ def calculateAng():
         mx = float(s2[7])
         my = float(s2[8])
         mz = float(s2[9][:(len(s2[9])-5)])  #to remove trailing elements
-        reading2 = np.array([t, ax, ay, az, gx, gy, gz, mx, my, mz])
+        reading2 = np.array([t2, ax, ay, az, gx, gy, gz, mx, my, mz])
         #print('currtime',t)
         with open('/home/dell/Project/csv/dataLive1.csv','a') as myfile:
             writer=csv.writer(myfile)
@@ -198,6 +200,7 @@ def calculateAng():
             Omegam1 = reading1[4:7]*pi/180
             
             vgr1 = reading1[1:4]
+
             vg1 = vgr1/(np.linalg.norm(vgr1))
 
             #vg = np.transpose(vg)
@@ -209,7 +212,7 @@ def calculateAng():
 
             #Euler angles 
             eulang1 = rotationMatrixToEulerAngles(Rcap1)
-            
+            eulang2 = rotationMatrixToEulerAngles(Rcap2)
             eulang = rotationMatrixToEulerAngles(Rrel)
             
             
@@ -256,9 +259,10 @@ def calculateAng():
             
         if i != 0:   
             nowtime1 = reading1[0]
+            nowtime2 = reading2[0]
             delt1 = nowtime1 - prevtime1
-            delt2 = nowtime2 = prevtime2
-            #print('delt : ', delt)
+            delt2 = nowtime2 - prevtime2
+            print('delt1 : ', delt1)
             Rcap1 = Rcap1*sc.expm(dotR1*delt1)
             Rcap2 = Rcap2*sc.expm(dotR2*delt2)
             Rrel = np.transpose(Rcap1)*Rcap2
@@ -279,6 +283,7 @@ def calculateAng():
 
             #Euler angles 
             eulang1 = rotationMatrixToEulerAngles(Rcap1)
+            eulang2 = rotationMatrixToEulerAngles(Rcap2)
             eulang = rotationMatrixToEulerAngles(Rrel)
             
             
@@ -303,7 +308,7 @@ def calculateAng():
             vgcap2 = np.array([vgcap2[0,0],vgcap2[1,0],vgcap2[2,0]])
 
             #Euler angles 
-            eulang2 = rotationMatrixToEulerAngles(Rcap2)
+            
             
             
             
@@ -321,7 +326,8 @@ def calculateAng():
            
             
         i = i + 1
-        return np.array([eulang1[0], eulang1[1], eulang1[2], eulang2[0], eulang2[1], eulang2[2], eulang[0], eulang[1], eulang[2]])*180/pi
+        #Currently all angles (absolute and relative) are present in the return value of the function
+        return np.array([eulang[0], eulang[1], eulang[2], eulang1[0], eulang1[1], eulang1[2], eulang2[0], eulang2[1], eulang2[2]])*180/pi
         
 
 # This function is called periodically from FuncAnimation
@@ -424,9 +430,9 @@ ani3 = FuncAnimation(fig3,
     interval=50,
     blit=True)
     
-ani4 = FuncAnimation(fig4,
-    animate4,
-    fargs=(ys4,),
-    interval=50,
-    blit=True)    
+#ani4 = FuncAnimation(fig4,
+#    animate4,
+#    fargs=(ys4,),
+#    interval=50,
+#    blit=True)    
 plt.show()
