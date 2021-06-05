@@ -13,7 +13,7 @@ Km = 1-Ka    #magnetometer term coefficient in correction
 pi = 3.14159265359
 datarate = 20 #rate of data collection in Hz
 alfam = 0.995  #parameter for low pass filter for magnetic field readings
-alfag = 0.995
+alfag = 0.995   #Decreasing alfag and alfam will result in less delay in results and less smoothening, so a trade off
 ndim = 3       #dimention of space
 def Vectocrossm(v):
     vx = np.array([[0, -v[2], v[1]],[v[2], 0, -v[0]],[-v[1], v[0], 0]])
@@ -168,14 +168,14 @@ def main():
             
             vg_lp = vg_lp*alfag + vgr*(1-alfag) 
             vg = vg_lp/(np.linalg.norm(vg_lp))
-            vg = vgr/np.linalg.norm(vgr)
+           #vg = vgr/np.linalg.norm(vgr)
             #vg = vgr/(np.linalg.norm(vgr))
             
             vmr = reading[7:]
             
             vm_lp = vm_lp*alfam + vmr*(1-alfam)        
             vm = vm_lp/(np.linalg.norm(vm_lp))
-            vm = vmr/(np.linalg.norm(vmr))
+            #vm = vmr/(np.linalg.norm(vmr))
             
             vgcap = np.transpose(Rcap)*vg0
             vgcap = np.array([vgcap[0,0],vgcap[1,0],vgcap[2,0]])
